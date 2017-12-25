@@ -1,1 +1,1 @@
-# Arduino project for Hackathon
+# Arduino project for Domotique
