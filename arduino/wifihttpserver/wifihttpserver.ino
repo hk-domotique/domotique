@@ -1,51 +1,104 @@
-#include <dht11.h>
 
-dht11 DHT11;
+#include <ArduinoHttpClient.h>
 
-#define DHT11PIN 2
+#include <ESP8266WiFi.h>
 
-void setup()
-{
+
+// Web socket server address
+char serverAddress[] =  "echo.websocket.org";  // server address  //
+int port = 80;
+
+// web socket client
+WiFiClient wifi;
+
+WebSocketClient socketClient = WebSocketClient(wifi, serverAddress, port);
+
+int status = WL_IDLE_STATUS;
+
+// wifi setup
+const char* ssid = "InterVenture-MOB";
+const char* password = "iv11000mob";
+
+const char* type = "light";
+
+int ledPin = D5;
+WiFiServer server(80);
+
+
+void setup() {
   Serial.begin(115200);
-  Serial.println("DHT11 TEST PROGRAM ");
-  Serial.print("LIBRARY VERSION: ");
-  Serial.println(DHT11LIB_VERSION);
+
+  // Connect to WiFi network
   Serial.println();
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected");
+
+  // Print the IP address
+  Serial.print("Use this URL : ");
+  Serial.print("http://");
+  Serial.print(WiFi.localIP());
+  Serial.println("/");
+
+  connectWebSocket();
 }
 
-void loop()
-{
-  Serial.println("\n");
+// connect to websocket server
+void connectWebSocket(){
+  Serial.println("starting WebSocket client");
+  socketClient.begin();
+  if(socketClient.connected()){
+    Serial.println("Socket client connected.");
+    initialMsg();
+  }
+}
 
-  int chk = DHT11.read(DHT11PIN);
+// send initial msg
+void initialMsg(){
+    Serial.println("Sending initial message.");
+    Serial.println(TYPE_TEXT);
+    socketClient.beginMessage(TYPE_TEXT);
+    socketClient.print(type);
+    socketClient.print("|");
+    socketClient.print(WiFi.localIP());    
+    socketClient.endMessage();
+    digitalWrite(ledPin, HIGH);
+}
 
-  Serial.print("Read sensor: ");
-  switch (chk)
-  {
-    case DHTLIB_OK: 
-    Serial.println("OK"); 
-    break;
-    case DHTLIB_ERROR_CHECKSUM: 
-    Serial.println("Checksum error"); 
-    break;
-    case DHTLIB_ERROR_TIMEOUT: 
-    Serial.println("Time out error"); 
-    break;
-    default: 
-    Serial.println("Unknown error"); 
-    break;
+  //led light status
+  int value = LOW;
+
+void loop() {
+  
+  while (!socketClient.connected()) {
+    Serial.print("Websocket client not conenct. Trying to reconnect ");
+    Serial.print(".");delay(1000);Serial.print(".");delay(1000);Serial.print(".");delay(1000);
+    digitalWrite(ledPin, LOW);
+    connectWebSocket();
   }
 
-  Serial.print("Humidity (%): ");
-  Serial.println((float)DHT11.humidity, 2);
+  while (socketClient.connected()) {
+    Serial.print("Sending hello ");
+    socketClient.beginMessage(TYPE_TEXT);
+    socketClient.print(WiFi.localIP());
+    socketClient.endMessage();
 
-  Serial.print("Temperature (°C): ");
-  Serial.println((float)DHT11.temperature, 2);
+    // check if a message is available to be received
+    int messageSize = socketClient.parseMessage();
+    if (messageSize > 0) {
+      Serial.println("Received a message:");
+      Serial.println(socketClient.readString());
+    }
 
-
-  delay(2000);
+    delay(2000);
+  }
 }
-//
-// END OF FILE
-//
-

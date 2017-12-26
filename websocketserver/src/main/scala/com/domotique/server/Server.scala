@@ -6,7 +6,10 @@ import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
 
+import scala.concurrent.Await
 import scala.io.StdIn
+
+import scala.concurrent.duration._
 
 object Server extends App {
 
