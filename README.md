@@ -1,5 +1,7 @@
 # domotique
 
+# JUST COUPLE OF COMMITS, DON'T GET SERIOUSLY
+
 [Smart home](https://en.wikipedia.org/wiki/Home_automation) and [Internet of Things](https://en.wikipedia.org/wiki/Internet_of_things) become popular and buzz word in last couple of years. Domotique is small hackathon project
 developed by couple of developers with basic microcontrollers knowledge.
 
